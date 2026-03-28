@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # ═══════════════════════════════════════════════════════════════════════════════
 # PAI Status Line
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -78,6 +78,9 @@ PAI_VERSION="${PAI_VERSION:-—}"
 # Get Algorithm version from settings.json (single source of truth)
 ALGO_VERSION=$(jq -r '.pai.algorithmVersion // "—"' "$SETTINGS_FILE" 2>/dev/null)
 ALGO_VERSION="${ALGO_VERSION:-—}"
+
+ZEN_QUOTES=$(jq -r 'if .pai.zenQuotes == null then "false" else (.pai.zenQuotes | tostring) end' "$SETTINGS_FILE" 2>/dev/null)
+ZEN_QUOTES="${ZEN_QUOTES:-false}"
 
 # Extract all data from JSON in single jq call
 eval "$(echo "$input" | jq -r '
@@ -216,7 +219,7 @@ mkdir -p "$_parallel_tmp"
         stash_count=$(git stash list 2>/dev/null | wc -l | tr -d ' ')
         [ -z "$stash_count" ] && stash_count=0
         sync_info=$(git rev-list --left-right --count HEAD...@{u} 2>/dev/null)
-        last_commit_epoch=$(git log -1 --format='%ct' 2>/dev/null)
+        last_commit_epoch=$(git log -1 --no-show-signature --format='%ct' 2>/dev/null)
 
         if [ -n "$sync_info" ]; then
             ahead=$(echo "$sync_info" | awk '{print $1}')
@@ -386,13 +389,18 @@ COUNTSEOF
 
 {
     # 6. Quote prefetch (was serial at the end — now parallel)
-    quote_age=$(($(date +%s) - $(get_mtime "$QUOTE_CACHE")))
-    if [ "$quote_age" -gt 300 ] || [ ! -f "$QUOTE_CACHE" ]; then
-        if [ -n "${ZENQUOTES_API_KEY:-}" ]; then
-            new_quote=$(curl -s --max-time 1 "https://zenquotes.io/api/random/${ZENQUOTES_API_KEY}" 2>/dev/null | \
-                jq -r '.[0] | select(.q | length < 80) | .q + "|" + .a' 2>/dev/null)
-            [ -n "$new_quote" ] && [ "$new_quote" != "null" ] && echo "$new_quote" > "$QUOTE_CACHE"
+    if [[ "$ZEN_QUOTES" = "true" ]]; then
+        quote_age=$(($(date +%s) - $(get_mtime "$QUOTE_CACHE")))
+        if [ "$quote_age" -gt 300 ] || [ ! -f "$QUOTE_CACHE" ]; then
+            if [ -n "${ZENQUOTES_API_KEY:-}" ]; then
+                new_quote=$(curl -s --max-time 1 "https://zenquotes.io/api/random/${ZENQUOTES_API_KEY}" 2>/dev/null | \
+                    jq -r '.[0] | select(.q | length < 80) | .q + "|" + .a' 2>/dev/null)
+                [ -n "$new_quote" ] && [ "$new_quote" != "null" ] && echo "$new_quote" > "$QUOTE_CACHE"
+            fi
         fi
+    else
+        echo "" > "$QUOTE_CACHE"
+        exit 0
     fi
 } &
 
@@ -1327,7 +1335,7 @@ fi
 # LINE 7: QUOTE (normal mode only)
 # ═══════════════════════════════════════════════════════════════════════════════
 
-if [ "$MODE" = "normal" ]; then
+if [[ "$ZEN_QUOTES" = "true" ]] && [[ "$MODE" = "normal" ]]; then
     printf "${SLATE_600}────────────────────────────────────────────────────────────────────────${RESET}\n"
 
     # Quote was prefetched in parallel block — just read the cache

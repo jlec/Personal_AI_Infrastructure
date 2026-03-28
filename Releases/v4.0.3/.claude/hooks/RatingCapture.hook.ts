@@ -282,7 +282,7 @@ async function analyzeSentiment(prompt: string, context: string): Promise<Sentim
     systemPrompt: SENTIMENT_SYSTEM_PROMPT,
     userPrompt,
     expectJson: true,
-    timeout: 12000,
+    timeout: 24000,
     level: 'fast',
   });
 
@@ -465,7 +465,7 @@ async function main() {
           confidence: 0.95,
           ...(cachedResponse ? { response_preview: cachedResponse.slice(0, 500) } : {}),
         });
-  
+
         process.exit(0);
       }
     }

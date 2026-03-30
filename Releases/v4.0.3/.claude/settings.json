@@ -38,7 +38,7 @@
     "workflows": 338
   },
   "daidentity": {
-    "color": "#3B82F6",
+    "color": "#b7bdf8",
     "displayName": "{DAIDENTITY.NAME}",
     "fullName": "{DAIDENTITY.NAME}",
     "name": "{DAIDENTITY.NAME}",

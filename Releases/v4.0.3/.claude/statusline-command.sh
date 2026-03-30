@@ -87,6 +87,7 @@ eval "$(echo "$input" | jq -r '
   "current_dir=" + (.workspace.current_dir // .cwd // "." | @sh) + "\n" +
   "session_id=" + (.session_id // "" | @sh) + "\n" +
   "model_name=" + (.model.display_name // "unknown" | @sh) + "\n" +
+  "model_id=" + (.model.id // "" | @sh) + "\n" +
   "cc_version_json=" + (.version // "" | @sh) + "\n" +
   "duration_ms=" + (.cost.total_duration_ms // 0 | tostring) + "\n" +
   "context_max=" + (.context_window.context_window_size // 200000 | tostring) + "\n" +
@@ -250,14 +251,14 @@ GITEOF
     [ -f "$LOCATION_CACHE" ] && cache_age=$(($(date +%s) - $(get_mtime "$LOCATION_CACHE")))
 
     if [ "$cache_age" -gt "$LOCATION_CACHE_TTL" ]; then
-        loc_data=$(curl -s --max-time 2 "http://ip-api.com/json/?fields=city,regionName,country,lat,lon" 2>/dev/null)
+        loc_data=$(curl -s --max-time 2 "https://ipapi.co/json/" 2>/dev/null)
         if [ -n "$loc_data" ] && echo "$loc_data" | jq -e '.city' >/dev/null 2>&1; then
             echo "$loc_data" > "$LOCATION_CACHE"
         fi
     fi
 
     if [ -f "$LOCATION_CACHE" ]; then
-        jq -r '"location_city=" + (.city | @sh) + "\nlocation_state=" + (.regionName | @sh)' "$LOCATION_CACHE" > "$_parallel_tmp/location.sh" 2>/dev/null
+        jq -r '"location_city=" + (.city | @sh) + "\nlocation_state=" + (.region | @sh)' "$LOCATION_CACHE" > "$_parallel_tmp/location.sh" 2>/dev/null
     else
         echo -e "location_city='Unknown'\nlocation_state=''" > "$_parallel_tmp/location.sh"
     fi
@@ -271,8 +272,8 @@ GITEOF
     if [ "$cache_age" -gt "$WEATHER_CACHE_TTL" ]; then
         lat="" lon=""
         if [ -f "$LOCATION_CACHE" ]; then
-            lat=$(jq -r '.lat // empty' "$LOCATION_CACHE" 2>/dev/null)
-            lon=$(jq -r '.lon // empty' "$LOCATION_CACHE" 2>/dev/null)
+            lat=$(jq -r '.latitude // empty' "$LOCATION_CACHE" 2>/dev/null)
+            lon=$(jq -r '.longitude // empty' "$LOCATION_CACHE" 2>/dev/null)
         fi
         lat="${lat:-37.7749}"
         lon="${lon:-122.4194}"
@@ -841,6 +842,11 @@ case "$MODE" in
         fi
         printf "${PAI_LABEL}LOC:${RESET} ${PAI_CITY}${location_city}${RESET}${SLATE_600},${RESET} ${PAI_STATE}${location_state}${RESET} ${SLATE_600}│${RESET} ${PAI_TIME}${current_time}${RESET} ${SLATE_600}│${RESET} ${PAI_WEATHER}${weather_str}${RESET}\n"
         printf "${SLATE_400}ENV:${RESET} ${SLATE_400}CC:${RESET} ${PAI_A}${cc_version}${RESET} ${SLATE_600}│${RESET} ${SLATE_500}PAI:${PAI_A}${PAI_VERSION}${RESET} ${SLATE_400}ALG:${PAI_A}${ALGO_VERSION}${RESET} ${SLATE_600}│${RESET} ${WIELD_ACCENT}SK:${RESET} ${SLATE_300}${skills_count}${RESET} ${SLATE_600}│${RESET} ${WIELD_WORKFLOWS}WF:${RESET} ${SLATE_300}${workflows_count}${RESET} ${SLATE_600}│${RESET} ${WIELD_HOOKS}Hooks:${RESET} ${SLATE_300}${hooks_count}${RESET}\n"
+        if [ -n "$model_id" ]; then
+            printf "${SLATE_400}MODEL:${RESET} ${PAI_A}${model_name}${RESET} ${SLATE_500}(${model_id})${RESET}\n"
+        else
+            printf "${SLATE_400}MODEL:${RESET} ${PAI_A}${model_name}${RESET}\n"
+        fi
         ;;
 esac
 printf "${SLATE_600}────────────────────────────────────────────────────────────────────────${RESET}\n"

@@ -39,9 +39,9 @@
   },
   "daidentity": {
     "color": "#b7bdf8",
-    "displayName": "{DAIDENTITY.NAME}",
-    "fullName": "{DAIDENTITY.NAME}",
-    "name": "{DAIDENTITY.NAME}",
+    "displayName": "TETO",
+    "fullName": "teto — Personal AI",
+    "name": "teto",
     "personality": {
       "_docs": "Personality traits (0-100) shape HOW emotions are expressed vocally. Same emotion, different expression based on these traits.",
       "baseVoice": "{YOUR_DA_VOICE_DESCRIPTION}",
@@ -384,11 +384,11 @@
   },
   "plansDirectory": "Plans/",
   "preferences": {
-    "temperatureUnit": "fahrenheit"
+    "temperatureUnit": "celsius"
   },
   "principal": {
-    "name": "{PRINCIPAL.NAME}",
-    "timezone": "{YOUR_TIMEZONE}",
+    "name": "Justin",
+    "timezone": "Europe/London",
     "voiceClone": {
       "_docs": "Your ElevenLabs voice clone for narration, audiobooks, and content read in your voice",
       "provider": "elevenlabs",
@@ -1044,5 +1044,6 @@
     "packageManager": "bun",
     "pythonPackageManager": "uv",
     "terminal": "Kitty"
-  }
+  },
+  "voiceEnabled": false
 }

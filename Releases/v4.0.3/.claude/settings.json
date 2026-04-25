@@ -343,7 +343,6 @@
       "NotebookRead",
       "NotebookEdit",
       "TodoWrite",
-      "ExitPlanMode",
       "Task",
       "Skill",
       "mcp__*"
